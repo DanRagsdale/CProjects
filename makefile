@@ -1,14 +1,9 @@
-#HEADERS = program.h headers.h
-#OBJECTS = program.o
-#
-#default: program
-#
-#%.o: %.c $(HEADERS)
-#    gcc -c $< -o $@
-#
-#program: $(OBJECTS)
-#    gcc $(OBJECTS) -o $@
-#
-#clean:
-#    -rm -f $(OBJECTS)
-#    -rm -f program
+CC=gcc
+CFLAGS=-lm
+
+SOURCES=raytrace.c vec3.c
+
+all: my
+
+my: $(SOURCES)
+	$(CC) -o a.out $(SOURCES) $(CFLAGS)
