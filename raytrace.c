@@ -5,11 +5,20 @@
 #include <math.h>
 
 #include "vec3.h"
+#include "ray.h"
 
 int main() 
 {
 	const int image_width = 256;
 	const int image_height = 256;
+
+	ray test_ray;
+	test_ray.origin = vec3_construct(0,0,0);
+	test_ray.direction = vec3_construct(1,1,0);
+	vec3 at = ray_at(&test_ray, 2);
+	fprintf(stderr, "%f, %f, %f", at.x, at.y, at.z);
+
+
 
 	printf("P3\n%d %d\n255\n", image_width, image_height);
 

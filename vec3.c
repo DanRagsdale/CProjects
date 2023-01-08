@@ -3,6 +3,15 @@
 
 #include "vec3.h"
 
+vec3 vec3_construct(double x, double y, double z)
+{
+	vec3 output;
+	output.x = x;
+	output.y = y;
+	output.z = z;
+	return output;
+}
+
 double vec3_length(vec3 input)
 {
 	return sqrt(vec3_length_squared(input));
