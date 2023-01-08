@@ -1,6 +1,15 @@
 #include "ray.h"
 #include "vec3.h"
 
+ray ray_construct(vec3 origin, vec3 direction)
+{
+	ray r;
+	r.origin = origin;
+	r.direction = direction;
+	return r;
+}
+
+
 vec3 ray_at(ray* r, double t)
 {
 	double new_x = r->origin.x + t * r->direction.x;
