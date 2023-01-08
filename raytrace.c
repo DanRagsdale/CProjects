@@ -17,11 +17,11 @@ vec3 test_color(ray* r)
 int main() 
 {
 	// Test Code
-	ray test_ray;
-	test_ray.origin = vec3_construct(0,0,0);
-	test_ray.direction = vec3_construct(1,1,0);
-	vec3 at = ray_at(&test_ray, 2);
-	fprintf(stderr, "%f, %f, %f", at.x, at.y, at.z);
+	//ray test_ray;
+	//test_ray.origin = vec3_construct(0,0,0);
+	//test_ray.direction = vec3_construct(1,1,0);
+	//vec3 at = ray_at(&test_ray, 2);
+	//fprintf(stderr, "%f, %f, %f", at.x, at.y, at.z);
 
 	// Image Setup
 	const int image_width = 400;
@@ -48,7 +48,16 @@ int main()
 			double dx = (double) i / (image_width - 1);
 			double dy = (double) j / (image_height - 1);
 
-			ray r = ray_construct(origin, vec3_construct(lower_left.x + dx * horizontal.x, lower_left.y + dy * vertical.y, 0));
+			ray r = ray_construct(origin, vec3_add(3, lower_left, vec3_scaled(horizontal, dx), vec3_scaled(vertical, dy)));
+			ray r1 = ray_construct(origin, vec3_construct(lower_left.x + dx * horizontal.x, lower_left.y + dy * vertical.y, 0));
+
+			if (i == image_width / 2)
+			{
+				fprintf(stderr, "r:  %f, %f, %f\n", r.direction.x, r.direction.y, r.direction.z);
+				fprintf(stderr, "r1: %f, %f, %f\n", r1.direction.x, r1.direction.y, r1.direction.z);
+				fprintf(stderr, "\n");
+			}
+
 			vec3 color = test_color(&r);
 			vec3_print_color(color);
 		}
