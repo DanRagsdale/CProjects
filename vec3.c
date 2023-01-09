@@ -20,7 +20,12 @@ double vec3_length(vec3 input)
 
 double vec3_length_squared(vec3 input)
 {
-	return input.x * input.x + input.y * input.y + input.z * input.z;
+	return vec3_dot(input, input);
+}
+
+double vec3_dot(vec3 A, vec3 B)
+{
+	return A.x * B.x + A.y * B.y + A.z * B.z;
 }
 
 vec3 vec3_add(int count,...)
@@ -39,6 +44,11 @@ vec3 vec3_add(int count,...)
 
 	va_end(valist);
 	return vec3_construct(tot_x, tot_y, tot_z);
+}
+
+vec3 vec3_subtract(vec3 A, vec3 B)
+{
+	return vec3_add(2, A, vec3_scaled(B, -1));
 }
 
 vec3 vec3_scaled(vec3 input, double t)
