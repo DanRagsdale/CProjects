@@ -2,28 +2,26 @@
 // https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
 #include <stdio.h>
-#include <stdbool.h>
 #include <math.h>
 
 #include "vec3.h"
 #include "ray.h"
+#include "hittable.h"
+#include "sphere.h"
 
-bool hit_sphere(vec3 center, double radius, ray* r)
-{
-	vec3 test_orig = vec3_subtract(r->origin, center);
-	double a = vec3_length_squared(r->direction);
-	double b = 2 * vec3_dot(r->direction, test_orig);
-	double c = vec3_length_squared(test_orig) - radius * radius;
 
-	double discriminant = b*b - 4*a*c;
-	return (discriminant > 0);
-}
+void* objects[1];
+hit_test object_functions[1];
+
 
 vec3 test_color(ray* r)
 {
-	if(hit_sphere(vec3_construct(0,0,01), 0.5, r))
+	hit_record hit = (*object_functions[0])(objects[0], r, 0, 10000);
+	
+	//double hit = hit_sphere(vec3_construct(0,0,-1), 0.5, r);
+	if(hit.t > 0)
 	{
-		return vec3_construct(1,0,0);
+		return vec3_scaled(vec3_construct(hit.normal.x + 1, hit.normal.y + 1, hit.normal.z + 1), 0.5);
 	}
 	vec3 unit_dir = vec3_normalized(r->direction);
 	double fade = 0.5 * (1 + unit_dir.y);
@@ -43,6 +41,11 @@ int main()
 	const int image_width = 400;
 	const int image_height = 200;
 
+	// World
+	sphere s = sphere_construct(vec3_construct(0,0,-1), 0.5);
+	objects[0] = &s;
+	object_functions[0] = &sphere_hit_test;
+
 	// Camera Setup
 	double viewport_height = 2.0;
 	double viewport_width = 4.0;
@@ -50,22 +53,22 @@ int main()
 
 	vec3 origin = vec3_construct(0,0,0);
 	vec3 horizontal = vec3_construct(viewport_width, 0, 0);
-	vec3 vertical = vec3_construct(0, viewport_height, 0);
+	vec3 vertical = vec3_construct(0, -viewport_height, 0);
 
-	vec3 lower_left = vec3_construct(-viewport_width / 2, -viewport_height / 2, -focal_length);
+	vec3 top_left = vec3_construct(-viewport_width / 2, viewport_height / 2, -focal_length);
 
 	// Render
 	printf("P3\n%d %d\n255\n", image_width, image_height);
 
-	for(int j = image_height-1; j >= 0; j--)
+	for(int j=0; j<image_height; j++)
 	{
-		for(int i = image_width-1; i >= 0; i--)
+		for(int i=0; i<image_width; i++)
 		{
 			double dx = (double) i / (image_width - 1);
 			double dy = (double) j / (image_height - 1);
 
-			ray r = ray_construct(origin, vec3_add(3, lower_left, vec3_scaled(horizontal, dx), vec3_scaled(vertical, dy)));
-			ray r1 = ray_construct(origin, vec3_construct(lower_left.x + dx * horizontal.x, lower_left.y + dy * vertical.y, 0));
+			ray r = ray_construct(origin, vec3_add(3, top_left, vec3_scaled(horizontal, dx), vec3_scaled(vertical, dy)));
+			//ray r1 = ray_construct(origin, vec3_construct(lower_left.x + dx * horizontal.x, lower_left.y + dy * vertical.y, 0));
 
 			//if (i == image_width / 2)
 			//{
