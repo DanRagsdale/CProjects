@@ -31,6 +31,11 @@ vec3 vec3_random_in_unit_sphere()
 	}
 }
 
+vec3 vec3_random_unit()
+{
+	return vec3_normalized(vec3_random_in_unit_sphere());
+}
+
 double vec3_length(vec3 input)
 {
 	return sqrt(vec3_length_squared(input));
@@ -80,10 +85,17 @@ vec3 vec3_normalized(vec3 input)
 	return vec3_scaled(input, 1 / norm);
 }
 
+
 void vec3_print_color(vec3 input)
 {
-	int ir = (int) (255 * input.x);
-	int ig = (int) (255 * input.y);
-	int ib = (int) (255 * input.z);
+	//Gamma correction
+	double gr = sqrt(input.x);
+	double gg = sqrt(input.y);
+	double gb = sqrt(input.z);
+
+	int ir = (int) (255 * gr);
+	int ig = (int) (255 * gg);
+	int ib = (int) (255 * gb);
+	
 	printf("%d %d %d\n", ir, ig, ib);
 }

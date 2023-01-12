@@ -36,7 +36,7 @@ vec3 test_color(ray* r, int depth)
 	hit.t = -1.0;
 	for(int i=0; i < 2; i++)
 	{
-		hit_record h = (*object_functions[i])(objects[i], r, 0, 10000);
+		hit_record h = (*object_functions[i])(objects[i], r, 0.0001, 10000);
 		if(hit.t < 0)
 			hit = h;
 		if(h.t > 0 && h.t < hit.t)
@@ -45,7 +45,7 @@ vec3 test_color(ray* r, int depth)
 	
 	if(hit.t > 0)
 	{
-		vec3 next_target = vec3_add(3, hit.point, hit.normal, vec3_random_in_unit_sphere());
+		vec3 next_target = vec3_add(3, hit.point, hit.normal, vec3_random_unit());
 		ray next_ray = ray_construct(hit.point,vec3_subtract(next_target, hit.point));
 		return vec3_scaled(test_color(&next_ray, depth-1), 0.5);
 		//return vec3_scaled(vec3_construct(hit.normal.x + 1, hit.normal.y + 1, hit.normal.z + 1), 0.5);
