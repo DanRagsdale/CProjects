@@ -6,8 +6,9 @@ typedef struct vec3 {
 
 // Util functions
 vec3 vec3_construct(double x, double y, double z);
+vec3 vec3_random_in_unit_sphere();
 
-// General vec3 functions
+// General vec3 operations 
 double vec3_length(vec3 input);
 double vec3_length_squared(vec3 input);
 double vec3_dot(vec3 A, vec3 B);

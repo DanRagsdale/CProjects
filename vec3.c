@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "vec3.h"
+#include "raytrace.h"
 
 vec3 vec3_construct(double x, double y, double z)
 {
@@ -11,6 +12,23 @@ vec3 vec3_construct(double x, double y, double z)
 	output.y = y;
 	output.z = z;
 	return output;
+}
+
+vec3 vec3_random_in_range(double min, double max)
+{
+	return vec3_construct(rand_range(min, max),rand_range(min, max),rand_range(min, max));
+}
+
+vec3 vec3_random_in_unit_sphere()
+{
+	while(1)
+	{
+		vec3 test_vec = vec3_random_in_range(-1,1);
+		if(vec3_length_squared(test_vec) <= 1)
+		{
+			return test_vec;
+		}
+	}
 }
 
 double vec3_length(vec3 input)

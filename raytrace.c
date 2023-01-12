@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "raytrace.h"
 #include "vec3.h"
 #include "ray.h"
 #include "hittable.h"
@@ -26,32 +27,34 @@ double rand_range(double min, double max)
 	return min + (max - min) * rand_unit();
 }
 
-vec3 test_color(ray* r)
+vec3 test_color(ray* r, int depth)
 {
+	if(depth <= 0)
+		return vec3_construct(0,0,0);
+
 	hit_record hit;
 	hit.t = -1.0;
 	for(int i=0; i < 2; i++)
 	{
 		hit_record h = (*object_functions[i])(objects[i], r, 0, 10000);
 		if(hit.t < 0)
-		{
 			hit = h;
-		}
 		if(h.t > 0 && h.t < hit.t)
-		{
 			hit = h;
-		}
 	}
 	
 	if(hit.t > 0)
 	{
-		return vec3_scaled(vec3_construct(hit.normal.x + 1, hit.normal.y + 1, hit.normal.z + 1), 0.5);
+		vec3 next_target = vec3_add(3, hit.point, hit.normal, vec3_random_in_unit_sphere());
+		ray next_ray = ray_construct(hit.point,vec3_subtract(next_target, hit.point));
+		return vec3_scaled(test_color(&next_ray, depth-1), 0.5);
+		//return vec3_scaled(vec3_construct(hit.normal.x + 1, hit.normal.y + 1, hit.normal.z + 1), 0.5);
 	}
 
 	// Background
 	vec3 unit_dir = vec3_normalized(r->direction);
 	double fade = 0.5 * (1 + unit_dir.y);
-	return vec3_construct(fade, fade, fade);
+	return vec3_construct(fade, fade, 1);
 }
 
 int main() 
@@ -91,6 +94,7 @@ int main()
 	printf("P3\n%d %d\n255\n", image_width, image_height);
 
 	int samples_per_pixel = 100;
+	int max_depth = 50;
 	for(int j=0; j<image_height; j++)
 	{
 		fprintf(stderr, "Working on line %d of %d\n", j, image_height);
@@ -103,7 +107,7 @@ int main()
 				double dy = (double) (j+rand_unit()) / (image_height - 1);
 
 				ray r = camera_get_ray(&cam, dx, dy);
-				total_color = vec3_add(2, total_color, test_color(&r));
+				total_color = vec3_add(2, total_color, test_color(&r, max_depth));
 			}
 			vec3_print_color(vec3_scaled(total_color, 1.0 / samples_per_pixel));
 		}
