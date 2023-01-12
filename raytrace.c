@@ -2,18 +2,29 @@
 // https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 #include "vec3.h"
 #include "ray.h"
 #include "hittable.h"
 #include "sphere.h"
+#include "camera.h"
 
 
 const int OBJECT_COUNT = 2;
 void* objects[2];
 hit_test object_functions[2];
 
+double rand_unit()
+{
+	return rand() / (RAND_MAX + 1.0);
+}
+
+double rand_range(double min, double max) 
+{
+	return min + (max - min) * rand_unit();
+}
 
 vec3 test_color(ray* r)
 {
@@ -57,47 +68,44 @@ int main()
 	const int image_height = 200;
 
 	// World
-	//sphere s0 = sphere_construct(vec3_construct(0,0,-1), 0.5);
 	sphere s0 = sphere_construct(vec3_construct(0,0,-1), 0.5);
-	sphere s1 = sphere_construct(vec3_construct(1,-2,-5), 4);
+	sphere s1 = sphere_construct(vec3_construct(0,-100.5,-1), 100);
 	objects[0] = &s0;
 	objects[1] = &s1;
 	object_functions[0] = &sphere_hit_test;
 	object_functions[1] = &sphere_hit_test;
 
 	// Camera Setup
+	camera cam;
+
 	double viewport_height = 2.0;
 	double viewport_width = 4.0;
 	double focal_length = 1.0;
-
-	vec3 origin = vec3_construct(0,0,0);
-	vec3 horizontal = vec3_construct(viewport_width, 0, 0);
-	vec3 vertical = vec3_construct(0, -viewport_height, 0);
-
-	vec3 top_left = vec3_construct(-viewport_width / 2, viewport_height / 2, -focal_length);
+	
+	cam.origin = vec3_construct(0,0,0);
+	cam.horizontal = vec3_construct(viewport_width, 0, 0);
+	cam.vertical = vec3_construct(0, -viewport_height, 0);
+	cam.top_left = vec3_construct(-viewport_width / 2, viewport_height / 2, -focal_length);
 
 	// Render
 	printf("P3\n%d %d\n255\n", image_width, image_height);
 
+	int samples_per_pixel = 100;
 	for(int j=0; j<image_height; j++)
 	{
+		fprintf(stderr, "Working on line %d of %d\n", j, image_height);
 		for(int i=0; i<image_width; i++)
 		{
-			double dx = (double) i / (image_width - 1);
-			double dy = (double) j / (image_height - 1);
+			vec3 total_color = vec3_construct(0,0,0);
+			for(int s=0; s<samples_per_pixel; s++)
+			{
+				double dx = (double) (i+rand_unit()) / (image_width - 1);
+				double dy = (double) (j+rand_unit()) / (image_height - 1);
 
-			ray r = ray_construct(origin, vec3_add(3, top_left, vec3_scaled(horizontal, dx), vec3_scaled(vertical, dy)));
-			//ray r1 = ray_construct(origin, vec3_construct(lower_left.x + dx * horizontal.x, lower_left.y + dy * vertical.y, 0));
-
-			//if (i == image_width / 2)
-			//{
-			//	fprintf(stderr, "r:  %f, %f, %f\n", r.direction.x, r.direction.y, r.direction.z);
-			//	fprintf(stderr, "r1: %f, %f, %f\n", r1.direction.x, r1.direction.y, r1.direction.z);
-			//	fprintf(stderr, "\n");
-			//}
-
-			vec3 color = test_color(&r);
-			vec3_print_color(color);
+				ray r = camera_get_ray(&cam, dx, dy);
+				total_color = vec3_add(2, total_color, test_color(&r));
+			}
+			vec3_print_color(vec3_scaled(total_color, 1.0 / samples_per_pixel));
 		}
 	}
 }
