@@ -1,5 +1,7 @@
 #pragma once
 
+#include <math.h>
+
 #include "vec3.h"
 #include "hittable.h"
 
@@ -34,7 +36,8 @@ hit_record sphere_hit_test(void* object, ray* r, double t_min, double t_max)
 	{
 		h.t = -1.0;
 	} else {
-		h.t = (-b - discriminant) / (2*a);
+		h.t = (-b - sqrt(discriminant)) / (2*a);
+
 		h.point = ray_at(r, h.t);
 		h.normal = vec3_normalized(vec3_subtract(h.point, s.center));
 	}

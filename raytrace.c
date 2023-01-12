@@ -10,19 +10,34 @@
 #include "sphere.h"
 
 
-void* objects[1];
-hit_test object_functions[1];
+const int OBJECT_COUNT = 2;
+void* objects[2];
+hit_test object_functions[2];
 
 
 vec3 test_color(ray* r)
 {
-	hit_record hit = (*object_functions[0])(objects[0], r, 0, 10000);
+	hit_record hit;
+	hit.t = -1.0;
+	for(int i=0; i < 2; i++)
+	{
+		hit_record h = (*object_functions[i])(objects[i], r, 0, 10000);
+		if(hit.t < 0)
+		{
+			hit = h;
+		}
+		if(h.t > 0 && h.t < hit.t)
+		{
+			hit = h;
+		}
+	}
 	
-	//double hit = hit_sphere(vec3_construct(0,0,-1), 0.5, r);
 	if(hit.t > 0)
 	{
 		return vec3_scaled(vec3_construct(hit.normal.x + 1, hit.normal.y + 1, hit.normal.z + 1), 0.5);
 	}
+
+	// Background
 	vec3 unit_dir = vec3_normalized(r->direction);
 	double fade = 0.5 * (1 + unit_dir.y);
 	return vec3_construct(fade, fade, fade);
@@ -42,9 +57,13 @@ int main()
 	const int image_height = 200;
 
 	// World
-	sphere s = sphere_construct(vec3_construct(0,0,-1), 0.5);
-	objects[0] = &s;
+	//sphere s0 = sphere_construct(vec3_construct(0,0,-1), 0.5);
+	sphere s0 = sphere_construct(vec3_construct(0,0,-1), 0.5);
+	sphere s1 = sphere_construct(vec3_construct(1,-2,-5), 4);
+	objects[0] = &s0;
+	objects[1] = &s1;
 	object_functions[0] = &sphere_hit_test;
+	object_functions[1] = &sphere_hit_test;
 
 	// Camera Setup
 	double viewport_height = 2.0;
