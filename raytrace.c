@@ -12,6 +12,7 @@
 #include "sphere.h"
 #include "camera.h"
 
+const int MAX_DIST = 10000;
 
 const int OBJECT_COUNT = 2;
 void* objects[2];
@@ -33,28 +34,54 @@ vec3 test_color(ray* r, int depth)
 		return vec3_construct(0,0,0);
 
 	hit_record hit;
-	hit.t = -1.0;
+	hit.t = MAX_DIST;
 	for(int i=0; i < 2; i++)
 	{
-		hit_record h = (*object_functions[i])(objects[i], r, 0.0001, 10000);
+		hit_record h = (*object_functions[i])(objects[i], r, 0.0001, MAX_DIST);
 		if(hit.t < 0)
 			hit = h;
 		if(h.t > 0 && h.t < hit.t)
 			hit = h;
 	}
 	
-	if(hit.t > 0)
+	if(hit.t < MAX_DIST)
 	{
-		vec3 next_target = vec3_add(3, hit.point, hit.normal, vec3_random_unit());
-		ray next_ray = ray_construct(hit.point,vec3_subtract(next_target, hit.point));
-		return vec3_scaled(test_color(&next_ray, depth-1), 0.5);
-		//return vec3_scaled(vec3_construct(hit.normal.x + 1, hit.normal.y + 1, hit.normal.z + 1), 0.5);
+		vec3 atten;
+		ray scattered;
+		if((*hit.mat.func)(r, &hit, &atten, &scattered))
+		{
+			vec3 scat_col = test_color(&scattered, depth - 1);
+			return vec3_construct(atten.x*scat_col.x, atten.y*scat_col.y, atten.z*scat_col.z);
+		}
+		//vec3 next_target = vec3_add(3, hit.point, hit.normal, vec3_random_unit());
+		//ray next_ray = ray_construct(hit.point,vec3_subtract(next_target, hit.point));
+		//return vec3_scaled(test_color(&next_ray, depth-1), 0.5);
+		return vec3_construct(0,0,0);
 	}
 
 	// Background
 	vec3 unit_dir = vec3_normalized(r->direction);
 	double fade = 0.5 * (1 + unit_dir.y);
 	return vec3_construct(fade, fade, 1);
+}
+
+int scatter_lambertian(ray* in_ray, hit_record* hr, vec3* attenuation, ray* scattered)
+{
+	vec3 scatter_dir = vec3_add(2, hr->normal, vec3_random_unit());
+
+	if(vec3_length_squared(scatter_dir) < 0.000001)
+	{
+		scatter_dir = hr->normal;
+	}
+
+	ray scatter_ray = ray_construct(hr->point, scatter_dir);
+
+	*scattered = scatter_ray;
+	*attenuation = *((vec3*)hr->mat.data);
+	
+	vec3_construct(1,0,0);
+	
+	return 1;
 }
 
 int main() 
@@ -71,8 +98,18 @@ int main()
 	const int image_height = 200;
 
 	// World
-	sphere s0 = sphere_construct(vec3_construct(0,0,-1), 0.5);
-	sphere s1 = sphere_construct(vec3_construct(0,-100.5,-1), 100);
+	vec3 red = vec3_construct(1,0,0);
+	material sphere_mat0;
+	sphere_mat0.data = &red;
+	sphere_mat0.func = &scatter_lambertian; 
+	
+	vec3 green = vec3_construct(0,1,0);
+	material sphere_mat1;
+	sphere_mat1.data = &green;
+	sphere_mat1.func = &scatter_lambertian; 
+
+	sphere s0 = sphere_construct(vec3_construct(0,0,-1), 0.5, sphere_mat0);
+	sphere s1 = sphere_construct(vec3_construct(0,-100.5,-1), 100, sphere_mat1);
 	objects[0] = &s0;
 	objects[1] = &s1;
 	object_functions[0] = &sphere_hit_test;
