@@ -85,6 +85,11 @@ vec3 vec3_normalized(vec3 input)
 	return vec3_scaled(input, 1 / norm);
 }
 
+vec3 vec3_reflected(vec3 input, vec3 n)
+{
+	return vec3_subtract(input, vec3_scaled(n, 2*vec3_dot(input,n)));
+}
+
 
 void vec3_print_color(vec3 input)
 {

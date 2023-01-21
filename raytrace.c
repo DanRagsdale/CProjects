@@ -84,6 +84,15 @@ int scatter_lambertian(ray* in_ray, hit_record* hr, vec3* attenuation, ray* scat
 	return 1;
 }
 
+int scatter_metal(ray* in_ray, hit_record* hr, vec3* attenuation, ray* scattered)
+{
+	vec3 reflected = vec3_reflected(in_ray->direction, hr->normal);
+	*scattered = ray_construct(hr->point, reflected);
+	*attenuation = *((vec3*)hr->mat.data);
+	
+	return 1;
+}
+
 int main() 
 {
 	// Test Code
@@ -103,10 +112,10 @@ int main()
 	sphere_mat0.data = &red;
 	sphere_mat0.func = &scatter_lambertian; 
 	
-	vec3 green = vec3_construct(0,1,0);
+	vec3 green = vec3_construct(0.8,0.8,0.8);
 	material sphere_mat1;
 	sphere_mat1.data = &green;
-	sphere_mat1.func = &scatter_lambertian; 
+	sphere_mat1.func = &scatter_metal; 
 
 	sphere s0 = sphere_construct(vec3_construct(0,0,-1), 0.5, sphere_mat0);
 	sphere s1 = sphere_construct(vec3_construct(0,-100.5,-1), 100, sphere_mat1);
