@@ -14,14 +14,16 @@
 #include "camera.h"
 
 const int MAX_DIST = 10000;
+#define MAX_COUNT 1024
+#define THREAD_COUNT 6
 
-int MAX_COUNT = 1024;
 int object_count = 0;
-void* objects[1024];
-hit_test object_functions[1024];
+void* objects[MAX_COUNT];
+hit_test object_functions[MAX_COUNT];
 
 int scatter(ray* in_ray, hit_record* hr, vec3* attenuation, ray* scattered);
 vec3 test_color(ray* r, int depth);
+void render_thread(void* threadid);
 
 void add_object(void* obj, hit_test ht)
 {
@@ -31,6 +33,16 @@ void add_object(void* obj, hit_test ht)
 	object_count++;
 }
 
+// Image Setup
+const int image_width = 1200;
+const int image_height = 600;
+
+const int SAMPLES_PER_PIXEL = 1000;
+const int MAX_DEPTH = 50;
+
+camera cam;
+
+vec3* image_buffer;
 
 int main() 
 {
@@ -41,9 +53,6 @@ int main()
 	//vec3 at = ray_at(&test_ray, 2);
 	//fprintf(stderr, "%f, %f, %f", at.x, at.y, at.z);
 
-	// Image Setup
-	const int image_width = 400;
-	const int image_height = 200;
 
 	// World
 	vec3 red = vec3_construct(1,0,0);
@@ -73,8 +82,6 @@ int main()
 	add_object(&s3, &sphere_hit_test);
 
 	// Camera Setup
-	camera cam;
-
 	double viewport_height = 2.0;
 	double viewport_width = 4.0;
 	double focal_length = 1.0;
@@ -85,13 +92,45 @@ int main()
 	cam.top_left = vec3_construct(-viewport_width / 2, viewport_height / 2, -focal_length);
 
 	// Render
-	printf("P3\n%d %d\n255\n", image_width, image_height);
 
-	const int SAMPLES_PER_PIXEL = 200;
-	const int MAX_DEPTH = 50;
-	for(int j=0; j<image_height; j++)
+
+	image_buffer = (vec3*) malloc(image_width * image_height * sizeof(vec3));
+
+	pthread_t threads[THREAD_COUNT];
+	for(int i=0; i<THREAD_COUNT; i++)
 	{
-		fprintf(stderr, "Working on line %d of %d\n", j, image_height);
+		pthread_create(&threads[i], NULL, &render_thread, (void*)i);
+	}
+	for(int i=0; i<5; i++)
+	{
+		pthread_join(threads[i], NULL);
+	}
+	fprintf(stderr, "Worker threads complete\n");
+
+	// Output
+	printf("P3\n%d %d\n255\n", image_width, image_height);
+	for(int i = 0; i < image_width*image_height; i++)
+	{
+		vec3_print_color(image_buffer[i]);
+	}
+
+	free(image_buffer);
+}
+
+void render_thread(void* threadid)
+{
+	int id;
+	id = (int)threadid;
+
+	int workload = image_height / THREAD_COUNT;
+	int start_loc = id * workload;
+	int end_loc = start_loc + workload;
+
+	int progress = 0;
+	for(int j=start_loc; j<end_loc; j++)
+	{
+		progress++;
+		fprintf(stderr, "Working on line %d of %d\n", progress, workload);
 		for(int i=0; i<image_width; i++)
 		{
 			vec3 total_color = vec3_construct(0,0,0);
@@ -102,10 +141,12 @@ int main()
 
 				ray r = camera_get_ray(&cam, dx, dy);
 				total_color = vec3_add(2, total_color, test_color(&r, MAX_DEPTH));
+				image_buffer[j * image_width + i] = vec3_scaled(total_color, 1.0 / SAMPLES_PER_PIXEL);
 			}
-			vec3_print_color(vec3_scaled(total_color, 1.0 / SAMPLES_PER_PIXEL));
 		}
 	}
+	
+	pthread_exit(NULL);
 }
 
 int scatter(ray* in_ray, hit_record* hr, vec3* attenuation, ray* scattered)

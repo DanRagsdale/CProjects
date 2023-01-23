@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-lm
+CFLAGS=-lm -lpthread
 
 SOURCES=raytrace.c vec3.c ray.c util.c
 
