@@ -6,12 +6,12 @@ typedef struct hit_record hit_record;
 typedef struct material material;
 
 typedef hit_record (*hit_test)(void* object, ray* r, double t_min, double t_max);
-typedef int (*scatter)(ray* in_ray, hit_record* hr, vec3* attenuation, ray* scattered);
+//typedef int (*scatter)(ray* in_ray, hit_record* hr, vec3* attenuation, ray* scattered);
 
 struct material
 {
-	void* data;
-	scatter func;
+	vec3 color;
+	double metalicity;
 
 };
 
