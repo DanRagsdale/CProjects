@@ -13,10 +13,12 @@ vec3 vec3_random_unit();
 double vec3_length(vec3 input);
 double vec3_length_squared(vec3 input);
 double vec3_dot(vec3 A, vec3 B);
+vec3 vec3_cross(vec3 A, vec3 B);
 vec3 vec3_add(int count,...);
 vec3 vec3_subtract(vec3 A, vec3 B);
 vec3 vec3_scaled(vec3 input, double t);
 vec3 vec3_normalized(vec3 input);
+vec3 vec3_negative(vec3 input);
 vec3 vec3_reflected(vec3 input, vec3 n);
 
 // Color functions

@@ -34,10 +34,10 @@ void add_object(void* obj, hit_test ht)
 }
 
 // Image Setup
-const int image_width = 1200;
-const int image_height = 600;
+const int image_width = 600;
+const int image_height = image_width / ASPECT_RATIO;
 
-const int SAMPLES_PER_PIXEL = 1000;
+const int SAMPLES_PER_PIXEL = 100;
 const int MAX_DEPTH = 50;
 
 camera cam;
@@ -85,11 +85,9 @@ int main()
 	double viewport_height = 2.0;
 	double viewport_width = 4.0;
 	double focal_length = 1.0;
-	
-	cam.origin = vec3_construct(0,0,0);
-	cam.horizontal = vec3_construct(viewport_width, 0, 0);
-	cam.vertical = vec3_construct(0, -viewport_height, 0);
-	cam.top_left = vec3_construct(-viewport_width / 2, viewport_height / 2, -focal_length);
+
+	//cam = camera_construct(vec3_construct(0,0,0), vec3_construct(0,0,-1), 90.0);
+	cam = camera_construct_lookpoint(vec3_construct(3,8,-6), vec3_construct(0,0,-1), 90);
 
 	// Render
 
@@ -101,7 +99,7 @@ int main()
 	{
 		pthread_create(&threads[i], NULL, &render_thread, (void*)i);
 	}
-	for(int i=0; i<5; i++)
+	for(int i=0; i<THREAD_COUNT; i++)
 	{
 		pthread_join(threads[i], NULL);
 	}

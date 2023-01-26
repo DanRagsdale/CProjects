@@ -12,7 +12,8 @@ struct material
 {
 	vec3 color;
 	double metalicity;
-
+	double index_of_refraction;
+	double transmissivity;
 };
 
 struct hit_record 
@@ -21,5 +22,4 @@ struct hit_record
 	vec3 point;
 	vec3 normal;
 	material mat;
-
 };

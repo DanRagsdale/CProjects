@@ -51,6 +51,11 @@ double vec3_dot(vec3 A, vec3 B)
 	return A.x * B.x + A.y * B.y + A.z * B.z;
 }
 
+vec3 vec3_cross(vec3 A, vec3 B)
+{
+	return vec3_construct(A.y*B.z-A.z*B.y, A.z*B.x-A.x*B.z, A.x*B.y-A.y*B.x);
+}
+
 vec3 vec3_add(int count,...)
 {
 	va_list valist;
@@ -83,6 +88,11 @@ vec3 vec3_normalized(vec3 input)
 {
 	double norm = vec3_length(input);
 	return vec3_scaled(input, 1 / norm);
+}
+
+vec3 vec3_negative(vec3 input)
+{
+	return vec3_construct(-input.x, -input.y, -input.z);
 }
 
 vec3 vec3_reflected(vec3 input, vec3 n)
