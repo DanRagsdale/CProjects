@@ -37,7 +37,7 @@ void add_object(void* obj, hit_test ht)
 const int image_width = 600;
 const int image_height = image_width / ASPECT_RATIO;
 
-const int SAMPLES_PER_PIXEL = 100;
+const int SAMPLES_PER_PIXEL = 200;
 const int MAX_DEPTH = 50;
 
 camera cam;
@@ -59,27 +59,40 @@ int main()
 	material sphere_mat0;
 	sphere_mat0.color = red;
 	sphere_mat0.metalicity = 0.0;
+	sphere_mat0.index_of_refraction = 1;
+	sphere_mat0.transmissivity = 0.0;
 	
-	vec3 green = vec3_construct(0.8,0.8,0.8);
+	vec3 green = vec3_construct(0.3,0.8,0.3);
 	material sphere_mat1;
 	sphere_mat1.color = green;
-	sphere_mat1.metalicity = 1.0; 
+	sphere_mat1.metalicity = 0.5; 
+	sphere_mat1.index_of_refraction = 1;
+	sphere_mat1.transmissivity = 0.0;
 	
 	vec3 blue = vec3_construct(0.3,0.3,0.9);
 	material sphere_mat2;
 	sphere_mat2.color = blue;
 	sphere_mat2.metalicity = 0.9;
+	sphere_mat2.index_of_refraction = 1;
+	sphere_mat2.transmissivity = 0.0;
 
-	sphere s0 = sphere_construct(vec3_construct(0,0,-1), 0.5, sphere_mat0);
+	material sphere_mat3 = sphere_mat2;
+	sphere_mat3.color = vec3_construct(1,1,1);
+	sphere_mat3.index_of_refraction = 1.5;
+	sphere_mat3.transmissivity = 1.0;
+
+	sphere s0 = sphere_construct(vec3_construct(0,0,-4), 0.5, sphere_mat0);
 	sphere s1 = sphere_construct(vec3_construct(0,-100.5,-1), 100, sphere_mat1);
 	sphere s2 = sphere_construct(vec3_construct(2,0,-2), 1, sphere_mat2);
 	sphere s3 = sphere_construct(vec3_construct(-2,0,-3), 0.5, sphere_mat0);
+	sphere s4 = sphere_construct(vec3_construct(0,0,-1), 0.5, sphere_mat3);
 
 
 	add_object(&s0, &sphere_hit_test);
 	add_object(&s1, &sphere_hit_test);
 	add_object(&s2, &sphere_hit_test);
 	add_object(&s3, &sphere_hit_test);
+	add_object(&s4, &sphere_hit_test);
 
 	// Camera Setup
 	double viewport_height = 2.0;
@@ -87,7 +100,7 @@ int main()
 	double focal_length = 1.0;
 
 	//cam = camera_construct(vec3_construct(0,0,0), vec3_construct(0,0,-1), 90.0);
-	cam = camera_construct_lookpoint(vec3_construct(3,8,-6), vec3_construct(0,0,-1), 90);
+	cam = camera_construct_lookpoint(vec3_construct(1,0,1), vec3_construct(0,0,-1), 90);
 
 	// Render
 
@@ -147,21 +160,53 @@ void render_thread(void* threadid)
 	pthread_exit(NULL);
 }
 
+double schlick_reflectance(double cosine, double ref_idx) {
+    // Use Schlick's approximation for reflectance.
+    auto r0 = (1-ref_idx) / (1+ref_idx);
+    r0 = r0*r0;
+    return r0 + (1-r0)*pow((1 - cosine),5);
+} 
+
 int scatter(ray* in_ray, hit_record* hr, vec3* attenuation, ray* scattered)
 {
-	vec3 diffuse_dir = vec3_add(2, hr->normal, vec3_random_unit());
-	vec3 reflected_dir = vec3_reflected(in_ray->direction, hr->normal);
-
-	vec3 scatter_dir = vec3_add(2, vec3_scaled(diffuse_dir, 1-hr->mat.metalicity), vec3_scaled(reflected_dir, hr->mat.metalicity));
-	
-	if(vec3_length_squared(scatter_dir) < 0.000001)
-	{
-		scatter_dir = hr->normal;
-	}
-
-	ray scatter_ray = ray_construct(hr->point, scatter_dir);
-	*scattered = scatter_ray;
 	*attenuation = hr->mat.color;
+
+	double ref_ratio;	
+	if(vec3_dot(in_ray->direction, hr->normal) < 0) {
+		ref_ratio = 1.0 / hr->mat.index_of_refraction;
+	} else {
+		ref_ratio = hr->mat.index_of_refraction;
+	}
+	vec3 unit_normal = vec3_normalized(hr->normal);
+	vec3 unit_in = vec3_normalized(in_ray->direction);
+
+	double cos_theta = -vec3_dot(unit_normal, unit_in);
+	double sin_theta = sqrt(1-cos_theta*cos_theta);
+
+
+	if(rand_unit() > (hr->mat.transmissivity-schlick_reflectance(cos_theta, ref_ratio)) || ref_ratio * sin_theta > 1)
+	{
+		vec3 diffuse_dir = vec3_add(2, hr->normal, vec3_random_unit());
+		vec3 reflected_dir = vec3_reflected(in_ray->direction, hr->normal);
+
+		vec3 scatter_dir = vec3_add(2, vec3_scaled(diffuse_dir, 1-hr->mat.metalicity), vec3_scaled(reflected_dir, hr->mat.metalicity));
+	
+		if(vec3_length_squared(scatter_dir) < 0.000001)
+		{
+			scatter_dir = hr->normal;
+		}
+
+		ray scatter_ray = ray_construct(hr->point, scatter_dir);
+		*scattered = scatter_ray;
+	} else {
+		double cos_theta = fmin(-vec3_dot(unit_normal, unit_in),1.0);
+		vec3 refracted_perp = vec3_scaled(vec3_add(2,unit_in,vec3_scaled(unit_normal,cos_theta)), ref_ratio);
+		vec3 refracted_parallel = vec3_scaled(unit_normal, -sqrt(1-vec3_length_squared(refracted_perp)));
+		vec3 refracted_dir = vec3_add(2, refracted_perp, refracted_parallel);
+
+		ray scatter_ray = ray_construct(hr->point, refracted_dir);
+		*scattered = scatter_ray;
+	}
 
 	return 1;
 }
